@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../../../app/Classes/classdao/Crud.php';
+use app\model\Crud;
 
 header('Content-Type: application/json');
 

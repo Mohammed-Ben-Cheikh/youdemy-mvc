@@ -1,7 +1,10 @@
 <?php
+namespace App\Model;
 require_once __DIR__ . '/../getid3/getid3.php';
-use Exception;
+use InvalidArgumentException;
 use App\Model\Cours;
+use Exception;
+use getID3;
 
 // Classe pour les cours Video
 class CoursVideo extends Cours

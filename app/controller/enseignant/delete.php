@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../../../app/Classes/classdao/Crud.php';
+use App\Model\Crud;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
     try {

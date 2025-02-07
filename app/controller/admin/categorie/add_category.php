@@ -1,5 +1,6 @@
 <?php
 use App\Model\Crud;
+use App\Model\Categories;
 
 // Handle form submission
 if ($_SERVER["REQUEST_METHOD"] == "POST") {

@@ -1,4 +1,5 @@
 <?PHP
+namespace App\Model;
 use App\Model\GetSet;
 abstract class Admin extends GetSet
 {

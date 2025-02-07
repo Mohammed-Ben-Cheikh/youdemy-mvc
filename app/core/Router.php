@@ -23,7 +23,7 @@ class Router
     public function dispatch($request)
     {
         if ($request->getMethod() === 'POST' && !Helper::validateCsrfToken()) {
-            redirect('');
+            Helper::goToPage('/');
         }
 
         foreach ($this->routes as $route) {
@@ -39,14 +39,14 @@ class Router
                 $route['method'] === $request->getMethod() &&
                 $route['path'] === $requestPath
             ) {
-                if (isLoggedIn()) {
+                if (Helper::isLogged()) {
                     // If the user role matched one of the route roles
-                    if (!in_array(user()->getRoleName(), $route['roles'])) {
+                    if (!in_array(Helper::getUserRole(), $route['roles'])) {
                         continue;
                     }
                 } else {
                     if (!in_array("visitor", $route['roles'])) {
-                        redirect("login");
+                        Helper::goToPage("login");
                     }
                 }
 
@@ -63,6 +63,6 @@ class Router
             }
         }
 
-        redirect('');
+        Helper::goToPage('/404');
     }
 }

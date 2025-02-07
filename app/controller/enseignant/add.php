@@ -1,9 +1,9 @@
 <?php
-require_once __DIR__ . '/../../../helper/function.php';
-require_once __DIR__ . '/../../../Classes/classdao/Crud.php';
-require_once __DIR__ . '/../../../Classes/CoursVideo.php';
-require_once __DIR__ . '/../../../Classes/CoursDocument.php';
-require_once __DIR__ . '/../../../Classes/Cours.php';
+use App\Model\Cours;
+use App\Model\CoursDocument;
+use App\Model\CoursVideo;
+use App\Model\Crud;
+use App\helper\Helper;
 
 header('Content-Type: application/json');
 

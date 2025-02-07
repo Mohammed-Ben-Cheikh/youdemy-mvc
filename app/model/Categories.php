@@ -1,4 +1,5 @@
 <?php
+namespace App\Model;
 use App\Model\GetSet;
 class Categories extends GetSet {
     protected $id;

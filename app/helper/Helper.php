@@ -51,7 +51,7 @@ class Helper
     // Check if a user is logged in
     public static function isLogged()
     {
-        if (isset($_SESSION['userId'])) {
+        if (isset($_SESSION['user_id'])) {
             return true;
         }
         return false;
@@ -112,5 +112,14 @@ class Helper
     public static function sanitizeInput($value)
     {
         return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
+    }
+
+    public static function getUserRole()
+    {
+        // Assuming user data is stored in session
+        if (isset($_SESSION['user_role'])) {
+            return $_SESSION['user_role'];
+        }
+        return null;
     }
 }

@@ -1,6 +1,7 @@
 <?php
-use Exception;
+namespace App\Model;
 use App\Model\Cours;
+use Exception;
 
 class CoursDocument extends Cours
 {
