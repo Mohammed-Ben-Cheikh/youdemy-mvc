@@ -1,0 +1,10 @@
+[2025-02-12 11:38:39] Erreur dans insertData: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'youdemy.your_table_name' doesn't exist | Code SQL: 42S02
+[2025-02-12 11:38:39] Erreur dans getAll: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'youdemy.your_table_name' doesn't exist | Code SQL: 42S02
+[2025-02-12 11:38:39] Erreur dans getBy: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'youdemy.your_table_name' doesn't exist | Code SQL: 42S02
+[2025-02-12 11:38:39] Erreur dans updateData: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'youdemy.your_table_name' doesn't exist | Code SQL: 42S02
+[2025-02-12 11:38:39] Erreur dans deleteData: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'youdemy.your_table_name' doesn't exist | Code SQL: 42S02
+[2025-02-12 11:40:47] Erreur dans insertData: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'youdemy.your_table_name' doesn't exist | Code SQL: 42S02
+[2025-02-12 11:40:47] Erreur dans getAll: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'youdemy.your_table_name' doesn't exist | Code SQL: 42S02
+[2025-02-12 11:40:47] Erreur dans getBy: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'youdemy.your_table_name' doesn't exist | Code SQL: 42S02
+[2025-02-12 11:40:47] Erreur dans updateData: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'youdemy.your_table_name' doesn't exist | Code SQL: 42S02
+[2025-02-12 11:40:47] Erreur dans deleteData: SQLSTATE[42S02]: Base table or view not found: 1146 Table 'youdemy.your_table_name' doesn't exist | Code SQL: 42S02

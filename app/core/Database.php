@@ -1,7 +1,9 @@
 <?php
 namespace app\core;
-use PDOException;
+
 use PDO;
+use PDOException;
+
 class Database
 {
     private $host = "localhost";
@@ -9,47 +11,44 @@ class Database
     private $username = "root";
     private $password = "";
     private $conn = null;
-    private $error;
 
-    // Static property to hold the single instance
     private static $instance = null;
 
-    // Private constructor to prevent direct instantiation
     private function __construct()
     {
         $this->connect();
     }
 
-    // Public static method to access the instance
-    public static function getInstance()
+    public static function getInstance(): self
     {
         if (self::$instance === null) {
-            self::$instance = new Database();
+            self::$instance = new self();
         }
         return self::$instance;
     }
 
-    // Method to establish the connection
-    public function connect()
+    private function connect(): void
     {
         if ($this->conn === null) {
             try {
-                $dsn = "mysql:host={$this->host};dbname={$this->db_name}";
+                $dsn = "mysql:host={$this->host};dbname={$this->db_name};charset=utf8mb4";
                 $this->conn = new PDO($dsn, $this->username, $this->password);
                 $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $this->conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+                $this->conn->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
             } catch (PDOException $e) {
-                $this->error = $e->getMessage();
-                error_log("Database connection error: {$this->error}", 0); // Log errors instead of echoing them
-                return null;
+                error_log("Database connection error: " . $e->getMessage());
+                throw new \RuntimeException("Database connection failed: Check configuration and server status");
             }
         }
+    }
 
+    public function getConnection(): PDO
+    {
         return $this->conn;
     }
 
-    // Method to get any errors
-    public function getError()
-    {
-        return $this->error;
-    }
+    // Empêcher le clonage et la désérialisation
+    private function __clone() {}
+    public function __wakeup() {}
 }

@@ -13,12 +13,8 @@ class Helper
     }
 
     // CSRF Token Validation
-    public static function validateCsrfToken()
+    public static function validateCsrfToken($csrfToken)
     {
-        $input = file_get_contents('php://input');
-        $data = json_decode($input, true);
-        $csrfToken = $_POST['csrf_token'] ?? $data['csrf_token'] ?? "";
-
         return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $csrfToken);
     }
 

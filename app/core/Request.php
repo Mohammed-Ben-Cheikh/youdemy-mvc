@@ -1,23 +1,20 @@
 <?php
+namespace app\core;
 
 class Request
 {
-    // Get the request method
     public function getMethod()
     {
-        return $_SERVER['REQUEST_METHOD'];
+        return strtolower($_SERVER['REQUEST_METHOD']);
     }
 
-    // Get the request path
     public function getPath()
     {
         $path = $_SERVER['REQUEST_URI'] ?? '/';
-        
-        $basePath = '/youdemy';
-        if (strpos($path, $basePath) === 0) {
-            $path = substr($path, strlen($basePath));
+        $position = strpos($path, '?');
+        if ($position === false) {
+            return $path;
         }
-        
-        return parse_url($path, PHP_URL_PATH);
+        return substr($path, 0, $position);
     }
 }

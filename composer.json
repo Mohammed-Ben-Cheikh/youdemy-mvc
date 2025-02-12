@@ -4,7 +4,11 @@
         "psr-4": {
             "App\\": "app/",
             "app\\model\\": "app/model/",
-            "app\\helper\\": "app/helper/"
+            "app\\helper\\": "app/helper/",
+            "app\\core\\": "app/core/",
+            "app\\controller\\": "app/controller/",
+            "app\\auth\\": "app/auth/"
+
         }
     },
     "require": {}

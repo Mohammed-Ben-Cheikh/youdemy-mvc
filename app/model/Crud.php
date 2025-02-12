@@ -1,169 +1,182 @@
 <?php
 namespace app\model;
-require_once __DIR__ . '/../core/Database.php';
-use InvalidArgumentException;
+
 use app\core\Database;
-use PDOException;
-use Exception;
 use PDO;
+use PDOException;
+use InvalidArgumentException;
+
 class Crud
 {
     private static $db;
 
-    public static function setDb($db)
-    {
-        self::$db = $db;
-    }
-
-    public static function init()
+    public static function initialize(): void
     {
         if (self::$db === null) {
-            $database = Database::getInstance();
-            self::$db = $database->connect();
-            if (!self::$db) {
-                throw new Exception("Failed to connect to the database.");
-            }
+            self::$db = Database::getInstance()->getConnection();
         }
     }
 
-    public static function insertData(string $table, array $data)
+    public static function insertData(string $table, array $data): int
     {
-        if (empty($data)) {
-            throw new InvalidArgumentException("Data array cannot be empty.");
-        }
-        self::init(); 
-        $columns = implode(", ", array_keys($data));
-        $placeholders = implode(", ", array_fill(0, count($data), '?'));
-        $values = array_values($data);
-        $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders})";
-        $stmt = self::$db->prepare($sql);
-        if ($stmt->execute($values)) {
-            return self::$db->lastInsertId();
-        } else {
-            return false;
-        }
-    }
+        self::validateTableName($table);
+        self::validateData($data);
 
-    public static function getAll(string $table)
-    {
-        self::init();
-
+        self::initialize();
+        
+        $columns = implode(', ', array_keys($data));
+        $placeholders = ':' . implode(', :', array_keys($data));
+        
         try {
-            $sql = "SELECT * FROM {$table}";
-            $stmt = self::$db->query($sql);
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $sql = "INSERT INTO {$table} ({$columns}) VALUES ({$placeholders})";
+            $stmt = self::$db->prepare($sql);
+            $stmt->execute($data);
+            return (int)self::$db->lastInsertId();
         } catch (PDOException $e) {
-            error_log("Crud::getAll error for table $table: " . $e->getMessage());
-            throw new Exception("Erreur lors de la récupération des données");
+            self::handleException($e, "insertData");
+            throw $e;
         }
     }
 
-    public static function getBy(string $table, string $column, $value)
+    public static function getAll(string $table): array
     {
-        self::init();
-
-        $sql = "SELECT * FROM {$table} WHERE {$column} = ?";
-        $stmt = self::$db->prepare($sql);
-        $stmt->execute([$value]);
-        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
-    }
-
-    public static function getAllBy(string $table, string $column, $value)
-    {
-        self::init();
-
-        $sql = "SELECT * FROM {$table} WHERE {$column} = ?";
-        $stmt = self::$db->prepare($sql);
-        $stmt->execute([$value]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: null;
-    }
-
-    public static function updateData(string $table, array $data, string $identifierColumn, $identifierValue)
-    {
-        if (empty($data)) {
-            throw new InvalidArgumentException("Data array cannot be empty.");
-        }
-        self::init();
-
-        $setClause = implode(", ", array_map(fn($col) => "{$col} = ?", array_keys($data)));
-        $values = array_values($data); // Fixed: Changed array.values() to array_values()
-        $values[] = $identifierValue;
-        $sql = "UPDATE {$table} SET {$setClause} WHERE {$identifierColumn} = ?";
-        $stmt = self::$db->prepare($sql);
-        return $stmt->execute($values);
-    }
-
-    public static function updateColumn(string $table, string $column, mixed $value, string $idColumn, mixed $idValue)
-    {
-        self::init();
+        self::validateTableName($table);
+        self::initialize();
 
         try {
-            $table = htmlspecialchars($table);
-            $column = htmlspecialchars($column);
-            $idColumn = htmlspecialchars($idColumn);
+            $stmt = self::$db->query("SELECT * FROM {$table}");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (PDOException $e) {
+            self::handleException($e, "getAll");
+            throw $e;
+        }
+    }
+
+    public static function getBy(string $table, string $column, $value): ?array
+    {
+        self::validateTableName($table);
+        self::validateColumnName($column);
+        self::initialize();
+
+        try {
+            $stmt = self::$db->prepare("SELECT * FROM {$table} WHERE {$column} = ?");
+            $stmt->execute([$value]);
+            return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+        } catch (PDOException $e) {
+            self::handleException($e, "getBy");
+            throw $e;
+        }
+    }
+
+    public static function updateData(string $table, array $data, string $identifierColumn, $identifierValue): bool
+    {
+        self::validateTableName($table);
+        self::validateColumnName($identifierColumn);
+        self::validateData($data);
+
+        self::initialize();
+
+        $setClause = implode(', ', array_map(fn($col) => "{$col} = :{$col}", array_keys($data)));
+        $data[$identifierColumn] = $identifierValue;
+
+        try {
+            $sql = "UPDATE {$table} SET {$setClause} WHERE {$identifierColumn} = :{$identifierColumn}";
+            $stmt = self::$db->prepare($sql);
+            return $stmt->execute($data);
+        } catch (PDOException $e) {
+            self::handleException($e, "updateData");
+            throw $e;
+        }
+    }
+
+    public static function deleteData(string $table, string $identifierColumn, $identifierValue): bool
+    {
+        self::validateTableName($table);
+        self::validateColumnName($identifierColumn);
+        self::initialize();
+
+        try {
+            $stmt = self::$db->prepare("DELETE FROM {$table} WHERE {$identifierColumn} = ?");
+            return $stmt->execute([$identifierValue]);
+        } catch (PDOException $e) {
+            self::handleException($e, "deleteData");
+            throw $e;
+        }
+    }
+
+    public static function updateColumn(string $table, string $column, mixed $value, string $idColumn, mixed $idValue): bool
+    {
+        self::validateTableName($table);
+        self::validateColumnName($column);
+        self::validateColumnName($idColumn);
+        self::initialize();
+
+        try {
             $sql = "UPDATE {$table} SET {$column} = ? WHERE {$idColumn} = ?";
             $stmt = self::$db->prepare($sql);
-            $result = $stmt->execute([$value, $idValue]);
-            return $result;
+            return $stmt->execute([$value, $idValue]);
         } catch (PDOException $e) {
-            error_log("Crud::updateColumn error: " . $e->getMessage());
-            throw new Exception("Erreur lors de la mise à jour");
+            self::handleException($e, "updateColumn");
+            throw $e;
         }
     }
 
-    public static function updateStatut(string $table, mixed $statutValue, string $idColumn, mixed $idValue)
+    public static function updateStatut(string $table, mixed $statutValue, string $idColumn, mixed $idValue): bool
     {
-        self::init();
+        self::validateTableName($table);
+        self::validateColumnName($idColumn);
+        self::initialize();
 
-        $table = htmlspecialchars($table);
-        $idColumn = htmlspecialchars($idColumn);
-        $sql = "UPDATE {$table} SET statut = ? WHERE {$idColumn} = ?";
-        $stmt = self::$db->prepare($sql);
-        $result = $stmt->execute([$statutValue, $idValue]);
-        return $result;
+        try {
+            $sql = "UPDATE {$table} SET statut = ? WHERE {$idColumn} = ?";
+            $stmt = self::$db->prepare($sql);
+            return $stmt->execute([$statutValue, $idValue]);
+        } catch (PDOException $e) {
+            self::handleException($e, "updateStatut");
+            throw $e;
+        }
     }
 
-    public static function deleteData(string $table, string $identifierColumn, $identifierValue)
+    public static function countRecords(string $table): int
     {
-        self::init();
+        self::validateTableName($table);
+        self::initialize();
 
-        $sql = "DELETE FROM {$table} WHERE {$identifierColumn} = ?";
-        $stmt = self::$db->prepare($sql);
-        return $stmt->execute([$identifierValue]);
-    }
-
-    public static function countRecords(string $table)
-    {
-        self::init();
         try {
             $sql = "SELECT COUNT(*) AS total FROM {$table}";
             $stmt = self::$db->prepare($sql);
             $stmt->execute();
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $result['total'] ?? 0;
+            return (int)($result['total'] ?? 0);
         } catch (PDOException $e) {
-            error_log("Error in countRecords: " . $e->getMessage());
-            return 0;
+            self::handleException($e, "countRecords");
+            throw $e;
         }
     }
-    public static function countRecordsBy(string $table, string $column, $value)
+
+    public static function countRecordsBy(string $table, string $column, $value): int
     {
-        self::init();
+        self::validateTableName($table);
+        self::validateColumnName($column);
+        self::initialize();
+
         try {
             $sql = "SELECT COUNT(*) AS total FROM {$table} WHERE {$column} = ?";
             $stmt = self::$db->prepare($sql);
             $stmt->execute([$value]);
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $result['total'] ?? 0;
+            return (int)($result['total'] ?? 0);
         } catch (PDOException $e) {
-            error_log("Error in countRecordsBy: " . $e->getMessage());
-            return 0;
+            self::handleException($e, "countRecordsBy");
+            throw $e;
         }
     }
 
-    public static function getPaginated(string $table, int $limit, int $page = 1)
+    public static function getPaginated(string $table, int $limit, int $page = 1): array
     {
-        self::init();
+        self::validateTableName($table);
+        self::initialize();
+
         try {
             $offset = ($page - 1) * $limit;
             $sql = "SELECT * FROM {$table} LIMIT :offset, :limit";
@@ -171,10 +184,44 @@ class Crud
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
         } catch (PDOException $e) {
-            error_log("Error in getPaginated: " . $e->getMessage());
-            return [];
+            self::handleException($e, "getPaginated");
+            throw $e;
         }
     }
+
+    // Méthodes de validation
+    private static function validateTableName(string $table): void
+    {
+        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $table)) {
+            throw new InvalidArgumentException("Invalid table name format");
+        }
+    }
+
+    private static function validateColumnName(string $column): void
+    {
+        if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $column)) {
+            throw new InvalidArgumentException("Invalid column name format");
+        }
+    }
+
+    private static function validateData(array $data): void
+    {
+        if (empty($data)) {
+            throw new InvalidArgumentException("Data array cannot be empty");
+        }
+    }
+
+    private static function handleException(PDOException $e, string $method): void
+    {
+        $logFile = __DIR__ . "/errors.log"; // Définir le fichier de log
+    
+        $message = "[" . date("Y-m-d H:i:s") . "] Erreur dans {$method}: " . $e->getMessage() . " | Code SQL: " . $e->getCode() . "\n";
+        
+        error_log($message, 3, $logFile); // Enregistrer l'erreur dans errors.log
+    }
+    
 }
+
+
